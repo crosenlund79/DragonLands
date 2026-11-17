@@ -622,6 +622,72 @@ def dragon_moss():
     return w, h, svg(w, h, body, defs)
 
 
+def egg(cracked):
+    w, h = 64, 80
+    defs = ('<radialGradient id="eggfill" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#fff5de"/>'
+            '<stop offset="0.55" stop-color="#efcf96"/><stop offset="1" stop-color="#d48f52"/></radialGradient>'
+            '<radialGradient id="eggglow"><stop offset="0" stop-color="#ffb347" stop-opacity="0.9"/>'
+            '<stop offset="1" stop-color="#ff7a2a" stop-opacity="0"/></radialGradient>')
+    shape = "M32,6 C47,6 57,30 57,48 C57,64 46,74 32,74 C18,74 7,64 7,48 C7,30 17,6 32,6 Z"
+    body = shadow(33, 74, 21, 5)
+    body += f'<path d="{shape}" fill="url(#eggfill)" stroke="{INK}" stroke-width="2.6"/>'
+    body += f'<clipPath id="eggclip"><path d="{shape}"/></clipPath><g clip-path="url(#eggclip)">'
+    body += '<ellipse cx="32" cy="76" rx="30" ry="16" fill="#e0703a" opacity="0.28"/>'
+    r = random.Random(77)
+    for _ in range(22):
+        x, y = r.uniform(10, 54), r.uniform(10, 70)
+        col = r.choice(["#8a3b22", "#a84a2a", "#6e2a18"])
+        body += f'<ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{r.uniform(1.0, 2.8):.1f}" ry="{r.uniform(0.9, 2.2):.1f}" fill="{col}" opacity="0.85"/>'
+    body += '<ellipse cx="22" cy="26" rx="5.5" ry="10" fill="#ffffff" opacity="0.5" transform="rotate(-18 22 26)"/>'
+    body += "</g>"
+    if cracked:
+        cracks = ["M45,15 L39,23 L45,29 L37,37 L43,44 L38,50", "M12,38 L21,43 L16,49 L25,54 L22,60"]
+        for c in cracks:
+            body += f'<path d="{c}" fill="none" stroke="#ff9a3a" stroke-width="5" stroke-linejoin="round" opacity="0.75" filter="url(#blur)"/>'
+            body += f'<path d="{c}" fill="none" stroke="#ffd27a" stroke-width="2.6" stroke-linejoin="round"/>'
+            body += f'<path d="{c}" fill="none" stroke="{INK}" stroke-width="1.4" stroke-linejoin="round"/>'
+        body += f'<polygon points="36,8 42,10 40,15 35,13" fill="#3a2418" stroke="{INK}" stroke-width="1.2"/>'
+        body += '<circle cx="32" cy="40" r="26" fill="url(#eggglow)" opacity="0.25"/>'
+    return w, h, svg(w, h, body, defs)
+
+
+def cinderwing_hatchling():
+    w, h = 72, 64
+    defs = ('<linearGradient id="bodyH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08444"/>'
+            '<stop offset="1" stop-color="#c9482a"/></linearGradient>')
+    # far legs
+    body = f'<rect x="22" y="46" width="8" height="12" rx="4" fill="#a83a22" stroke="{INK}" stroke-width="1.8"/>'
+    body += f'<rect x="42" y="46" width="8" height="12" rx="4" fill="#a83a22" stroke="{INK}" stroke-width="1.8"/>'
+    # tail with flame tip
+    body += f'<path d="M20,46 Q8,48 5,38 Q4,32 9,33 Q11,41 22,40 Z" fill="url(#bodyH)" stroke="{INK}" stroke-width="2" stroke-linejoin="round"/>'
+    body += f'<path d="M8,34 Q2,28 6,22 Q8,28 12,30 Q11,26 14,24 Q14,31 10,35 Z" fill="#ffcf5a" stroke="{INK}" stroke-width="1.4"/>'
+    # body
+    body += f'<ellipse cx="36" cy="44" rx="18" ry="13" fill="url(#bodyH)" stroke="{INK}" stroke-width="2.4"/>'
+    body += '<ellipse cx="38" cy="49" rx="11" ry="6.5" fill="#f6c86a"/>'
+    # wing nub
+    body += f'<path d="M30,36 Q24,22 34,20 Q36,28 42,30 Q38,34 36,38 Z" fill="#b8442a" stroke="{INK}" stroke-width="1.8" stroke-linejoin="round"/>'
+    body += '<path d="M32,32 Q30,26 34,23" stroke="#f08a45" stroke-width="1.6" fill="none"/>'
+    # near legs
+    body += f'<rect x="26" y="48" width="9" height="12" rx="4.5" fill="#d0542e" stroke="{INK}" stroke-width="2"/>'
+    body += f'<rect x="44" y="48" width="9" height="12" rx="4.5" fill="#d0542e" stroke="{INK}" stroke-width="2"/>'
+    for x in (28, 32, 46, 50):
+        body += f'<circle cx="{x}" cy="59" r="1.4" fill="#f3e6c8"/>'
+    # head
+    body += f'<circle cx="52" cy="25" r="15" fill="url(#bodyH)" stroke="{INK}" stroke-width="2.4"/>'
+    body += f'<ellipse cx="64" cy="30" rx="7" ry="6" fill="#e86a34" stroke="{INK}" stroke-width="2"/>'
+    body += '<circle cx="67" cy="28" r="1" fill="#3a2418"/>'
+    body += '<path d="M58,34 Q62,37 66,34" stroke="#3a2418" stroke-width="1.3" fill="none"/>'
+    body += f'<circle cx="55" cy="22" r="5.2" fill="#fffaf0" stroke="{INK}" stroke-width="1.4"/>'
+    body += '<circle cx="56.5" cy="22.5" r="3" fill="#2a1d14"/><circle cx="57.6" cy="21.2" r="1.1" fill="#ffffff"/>'
+    body += '<ellipse cx="50" cy="31" rx="3.2" ry="2" fill="#ff9a7a" opacity="0.7"/>'
+    body += f'<polygon points="44,13 42,5 49,11" fill="#3a2418" stroke="{INK}" stroke-width="1.2"/>'
+    # shell cap from the egg
+    body += (f'<path d="M45,13 Q52,0 62,9 L60,12 L57,9 L54,13 L51,10 L48,14 Z" fill="#f3e3c3" stroke="{INK}" '
+             f'stroke-width="1.6" stroke-linejoin="round"/>')
+    body += '<circle cx="53" cy="7" r="1.2" fill="#8a3b22"/><circle cx="57" cy="8.5" r="0.9" fill="#8a3b22"/>'
+    return w, h, svg(w, h, body, defs)
+
+
 SPRITES = {
     "decor/tree_oak": tree_oak,
     "decor/tree_pine": tree_pine,
@@ -638,6 +704,10 @@ SPRITES = {
     "actors/adventurer": adventurer,
     "dragons/ember": dragon_ember,
     "dragons/moss": dragon_moss,
+    # Prototype 002 (appended so earlier sprites keep their grain seeds)
+    "eggs/cinderwing": lambda: egg(False),
+    "eggs/cinderwing_cracked": lambda: egg(True),
+    "dragons/cinderwing_hatchling": cinderwing_hatchling,
 }
 
 TEXTURES = {

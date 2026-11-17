@@ -6,13 +6,16 @@ var title: String
 var text: String
 var art: String  ## Logical asset name for AssetResolver.
 var choices: Array[EncounterChoice] = []
+var depleted_text: String  ## Optional description once this location's egg has been taken.
 
 
-func _init(p_title: String, p_text: String, p_art: String, p_choices: Array[EncounterChoice]) -> void:
+func _init(p_title: String, p_text: String, p_art: String, p_choices: Array[EncounterChoice],
+		p_depleted_text: String = "") -> void:
 	title = p_title
 	text = p_text
 	art = p_art
 	choices = p_choices
+	depleted_text = p_depleted_text
 
 
 func get_choice(choice_id: String) -> EncounterChoice:

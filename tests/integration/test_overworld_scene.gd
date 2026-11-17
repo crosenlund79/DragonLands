@@ -40,8 +40,8 @@ func test_click_travel_moves_adventurer_advances_time_and_companions_follow() ->
 	assert_eq(scene.session.adventurer_cell, Vector2i(8, 17))
 	assert_gt(scene.session.clock.total_minutes, start_minutes)
 	for dragon in _companions():
-		assert_lt(dragon.position.distance_to(scene.adventurer.position), 190.0, dragon.profile.name)
-		assert_lt(dragon.position.x, scene.adventurer.position.x, "%s trails behind" % dragon.profile.name)
+		assert_lt(dragon.position.distance_to(scene.adventurer.position), 190.0, dragon.record.name)
+		assert_lt(dragon.position.x, scene.adventurer.position.x, "%s trails behind" % dragon.record.name)
 	assert_string_contains(scene.hud._time_label.text, "Day 1")
 
 

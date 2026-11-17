@@ -1,10 +1,15 @@
 class_name OverworldSession
 extends RefCounted
 ## Game state and rules of one overworld outing, independent of rendering:
-## travel advances the clock and explores fog, visits open encounters.
+## travel advances the clock and explores fog, visits open encounters, eggs
+## develop with the clock and hatch into new dragons at camp.
 ## Scene nodes call into this object; it never touches Nodes itself.
 
 signal cell_changed(cell: Vector2i)
+signal egg_acquired(egg: EggRecord)
+signal egg_ready(egg: EggRecord)
+signal hatch_requested(egg: EggRecord)  ## UI should run the hatching moment, then call hatch_egg().
+signal dragon_hatched(dragon: DragonRecord)
 
 const SIGHT_RADIUS := 5.5
 const AREA_NAME_RADIUS := 2.5
@@ -14,20 +19,25 @@ var fog: FogOfWar
 var clock: WorldClock
 var locations: LocationRegistry
 var pathfinder: GridPathfinder
-var party: Array[DragonProfile]
+var roster: DragonRoster  ## Owned dragons, in party order (all of them travel with you).
+var eggs := EggCollection.new()
 var adventurer_cell: Vector2i
+var next_serial := 1  ## Source of unique ids for new eggs and dragons.
+var eggs_taken: Dictionary = {}  ## location id -> true once its egg was collected.
+var _ready_announced: Dictionary = {}  ## egg id -> true once egg_ready was emitted.
 
 
-func _init(p_map: RegionMap, p_locations: LocationRegistry, p_party: Array[DragonProfile],
+func _init(p_map: RegionMap, p_locations: LocationRegistry, p_roster: DragonRoster,
 		start_cell: Vector2i, start_minutes: float) -> void:
 	map = p_map
 	locations = p_locations
-	party = p_party
+	roster = p_roster
 	adventurer_cell = start_cell
 	fog = FogOfWar.new(map.size)
 	clock = WorldClock.new(start_minutes)
 	pathfinder = GridPathfinder.new(map, true)
 	fog.revealed.connect(pathfinder.reveal)
+	clock.time_changed.connect(_on_clock_changed)  # A method, not a lambda: avoids a RefCounted cycle.
 
 
 ## Reveals the surroundings of the starting cell. Call once after signals are connected.
@@ -78,12 +88,104 @@ func arrive(cell: Vector2i) -> Location:
 	return location
 
 
-## Applies a chosen encounter option and returns its outcome text.
+## Description to show for a location right now.
+func encounter_text(location: Location) -> String:
+	var e := location.encounter
+	return e.depleted_text if egg_taken(location.id) and e.depleted_text != "" else e.text
+
+
+## The choices currently available at a location (egg choices depend on state).
+func choices_for(location: Location) -> Array[EncounterChoice]:
+	var result: Array[EncounterChoice] = []
+	var now := clock.total_minutes
+	var next_egg := eggs.soonest(now)
+	for choice in location.encounter.choices:
+		match choice.action:
+			EncounterChoice.ACTION_TAKE_EGG:
+				if not egg_taken(location.id):
+					result.append(choice)
+			EncounterChoice.ACTION_HATCH_EGG:
+				if next_egg != null and next_egg.is_ready(now):
+					result.append(choice.with_label("Hatch the %s egg" % next_egg.species().short_name))
+			EncounterChoice.ACTION_WARM_EGG:
+				if next_egg != null and not next_egg.is_ready(now):
+					result.append(choice.with_label("%s (%s)" % [choice.label,
+						WorldClock.format_duration(next_egg.remaining_minutes(now))]))
+			_:
+				result.append(choice)
+	return result
+
+
+## Applies a chosen encounter option and returns its outcome text ("" = close the panel).
 func resolve_choice(location: Location, choice: EncounterChoice) -> String:
+	match choice.action:
+		EncounterChoice.ACTION_TAKE_EGG:
+			if egg_taken(location.id):
+				return ""
+			clock.advance(choice.minutes)
+			var egg := EggRecord.create(new_id("egg"), choice.species, location.id, clock.total_minutes,
+				hash("%s/%s/%d" % [location.id, choice.species, int(clock.total_minutes)]) & 0x7fffffff)
+			eggs_taken[location.id] = true
+			eggs.add(egg)
+			egg_acquired.emit(egg)
+			return choice.outcome
+		EncounterChoice.ACTION_WARM_EGG, EncounterChoice.ACTION_HATCH_EGG:
+			var egg := eggs.soonest(clock.total_minutes)
+			if egg == null:
+				return ""
+			clock.advance(egg.remaining_minutes(clock.total_minutes))
+			hatch_requested.emit(egg)
+			return ""
 	clock.advance(choice.minutes)
 	if choice.reveal_radius > 0.0:
 		_explore(location.cell, choice.reveal_radius)
 	return choice.outcome
+
+
+func egg_taken(location_id: String) -> bool:
+	return eggs_taken.has(location_id)
+
+
+## Hatches a ready egg into a new owned dragon named `chosen_name`. Returns null if the
+## egg is unknown or not ready yet.
+func hatch_egg(egg_id: String, chosen_name: String) -> DragonRecord:
+	var egg := eggs.get_by_id(egg_id)
+	if egg == null or not egg.is_ready(clock.total_minutes):
+		return null
+	var nest := locations.get_by_id(egg.origin_location_id)
+	var here := locations.at_cell(adventurer_cell)
+	var origin := "Hatched at %s from an egg found at %s" % [
+		here.name if here != null else "the roadside", nest.name if nest != null else "the wild"]
+	var dragon := Hatching.hatch(egg, new_id("dragon"), chosen_name, clock.total_minutes, origin)
+	eggs.remove(egg_id)
+	_ready_announced.erase(egg_id)
+	roster.add(dragon)
+	dragon_hatched.emit(dragon)
+	return dragon
+
+
+func new_id(prefix: String) -> String:
+	var id := "%s-%d" % [prefix, next_serial]
+	next_serial += 1
+	return id
+
+
+## Marks eggs that are already ready as announced (used after loading a save).
+func mark_ready_eggs_announced() -> void:
+	for egg in eggs.all():
+		if egg.is_ready(clock.total_minutes):
+			_ready_announced[egg.id] = true
+
+
+func _on_clock_changed(_minutes: float) -> void:
+	_announce_ready_eggs()
+
+
+func _announce_ready_eggs() -> void:
+	for egg in eggs.all():
+		if not _ready_announced.has(egg.id) and egg.is_ready(clock.total_minutes):
+			_ready_announced[egg.id] = true
+			egg_ready.emit(egg)
 
 
 ## Short place description for the HUD, e.g. "Old road" or "Emberfall Nest".

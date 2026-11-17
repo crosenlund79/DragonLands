@@ -34,6 +34,11 @@ func reveal(cells: Array[Vector2i]) -> void:
 			_astar.set_point_solid(cell, false)
 
 
+## Blocks every cell again (before re-revealing a loaded fog state).
+func forget_explored() -> void:
+	_astar.fill_solid_region(_astar.region, true)
+
+
 func is_routable(cell: Vector2i) -> bool:
 	return _map.is_inside(cell) and not _astar.is_point_solid(cell)
 

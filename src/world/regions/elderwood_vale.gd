@@ -59,6 +59,9 @@ static func create_locations() -> LocationRegistry:
 		"landmarks/camp", Encounter.new("Wayfarer's Camp",
 			"Your camp at the western edge of the Elderwood. Ember dozes beside last night's fire while Moss noses through the packs for dried apples.",
 			"landmarks/camp", [
+				EncounterChoice.new("hatch", "Hatch the egg", "", 0.0, 0.0, EncounterChoice.ACTION_HATCH_EGG),
+				EncounterChoice.new("warm", "Keep the egg warm until it hatches", "", 0.0, 0.0,
+					EncounterChoice.ACTION_WARM_EGG),
 				EncounterChoice.new("rest", "Rest by the fire (1h)",
 					"You rest a while. Moss curls around your boots; Ember keeps one golden eye on the road.", 60.0),
 				EncounterChoice.new("leave", "Set out"),
@@ -96,6 +99,9 @@ static func create_locations() -> LocationRegistry:
 					"You kneel at the rim, hands open. The wild dragon lands on a crag and rumbles; Ember answers with a soft chirr. At last it settles over its eggs and lets you stay. You sketch the nest and its three eggs.", 30.0),
 				EncounterChoice.new("ember", "Let Ember greet it (15m)",
 					"Ember glides up to the crag. The two drakes trade curls of smoke and low clicks. When Ember returns it smells of warm ash - and looks very pleased with itself.", 15.0),
+				EncounterChoice.new("egg", "Ask, through Ember, for an egg (45m)",
+					"Ember lands beside the wild Cinderwing. For a long while they trade smoke and low clicks. At last the wild dragon noses one speckled egg to the rim of the nest and steps back. You wrap it in your cloak. It is warm, and something inside shifts.\n\nKeep it with you; return to Wayfarer's Camp when it is ready to hatch.",
+					45.0, 0.0, EncounterChoice.ACTION_TAKE_EGG, "cinderwing"),
 				EncounterChoice.new("leave", "Withdraw quietly"),
-			])))
+			], "Two speckled eggs glow in the ash where three once lay. The wild Cinderwing watches from its crag, calm now - it knows you, and it knows Ember.")))
 	return registry

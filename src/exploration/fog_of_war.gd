@@ -40,6 +40,20 @@ func explored_count() -> int:
 	return _explored.count(1)
 
 
+## Replaces the explored state from to_bytes() output (any non-zero byte = explored).
+## Emits `revealed` with every explored cell so listeners can rebuild. False on size mismatch.
+func load_bytes(bytes: PackedByteArray) -> bool:
+	if bytes.size() != size.x * size.y:
+		return false
+	var cells: Array[Vector2i] = []
+	for i in bytes.size():
+		_explored[i] = 1 if bytes[i] != 0 else 0
+		if bytes[i] != 0:
+			cells.append(Vector2i(i % size.x, i / size.x))
+	revealed.emit(cells)
+	return true
+
+
 ## One byte per cell (255 = explored) for rendering.
 func to_bytes() -> PackedByteArray:
 	var bytes := _explored.duplicate()

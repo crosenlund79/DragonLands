@@ -11,6 +11,7 @@ const GROUND := {
 	"actors/adventurer": 0.95,
 	"dragons/moss": 0.92,
 	"dragons/ember": 0.62,
+	"dragons/cinderwing_hatchling": 0.93,
 	"decor/bridge": 0.5,
 	"decor/bush": 0.86,
 	"decor/rocks": 0.86,

@@ -6,6 +6,7 @@ signal choice_made(location: Location, choice: EncounterChoice)
 signal closed
 
 var _location: Location
+var _offered: Array[EncounterChoice] = []
 var _title: Label
 var _art: TextureRect
 var _body: Label
@@ -53,13 +54,15 @@ func _ready() -> void:
 	col.add_child(_choices)
 
 
-func open(location: Location, art: Texture2D) -> void:
+## Shows `location` with its current description and choices (both supplied by the session).
+func open(location: Location, art: Texture2D, text: String, choices: Array[EncounterChoice]) -> void:
 	_location = location
+	_offered = choices
 	_title.text = location.encounter.title
-	_body.text = location.encounter.text
+	_body.text = text
 	_art.texture = art
 	_clear_choices()
-	for choice in location.encounter.choices:
+	for choice in choices:
 		var button := UiStyle.button(choice.label)
 		button.pressed.connect(_on_choice.bind(choice))
 		_choices.add_child(button)
@@ -70,10 +73,16 @@ func is_open() -> bool:
 	return visible
 
 
+func offered_choice_ids() -> Array:
+	return _offered.map(func(c: EncounterChoice) -> String: return c.id)
+
+
+## Picks an offered choice by id (as a click would); ignored if not offered.
 func choose(choice_id: String) -> void:
-	var choice := _location.encounter.get_choice(choice_id) if _location else null
-	if choice:
-		_on_choice(choice)
+	for choice in _offered:
+		if choice.id == choice_id:
+			_on_choice(choice)
+			return
 
 
 func _on_choice(choice: EncounterChoice) -> void:
@@ -86,6 +95,7 @@ func show_outcome(text: String) -> void:
 		close()
 		return
 	_body.text = text
+	_offered = []
 	_clear_choices()
 	var button := UiStyle.button("Continue")
 	button.pressed.connect(close)
@@ -93,8 +103,11 @@ func show_outcome(text: String) -> void:
 
 
 func close() -> void:
+	if not visible:
+		return
 	visible = false
 	_location = null
+	_offered = []
 	closed.emit()
 
 

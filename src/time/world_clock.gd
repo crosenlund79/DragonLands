@@ -21,6 +21,12 @@ func advance(minutes: float) -> void:
 	time_changed.emit(total_minutes)
 
 
+## Jumps to an absolute time (used when loading a save).
+func set_time(minutes: float) -> void:
+	total_minutes = maxf(0.0, minutes)
+	time_changed.emit(total_minutes)
+
+
 func day() -> int:
 	return int(floor(total_minutes / MINUTES_PER_DAY)) + 1
 

@@ -43,6 +43,26 @@ func mark_visited(id: String) -> void:
 	_visited[id] = true
 
 
+func discovered_ids() -> PackedStringArray:
+	return PackedStringArray(_discovered.keys())
+
+
+func visited_ids() -> PackedStringArray:
+	return PackedStringArray(_visited.keys())
+
+
+## Replaces discovery/visit state (from a save). Unknown ids are ignored; emits nothing.
+func restore_state(discovered_list: Array, visited_list: Array) -> void:
+	_discovered.clear()
+	_visited.clear()
+	for id in discovered_list:
+		if get_by_id(str(id)) != null:
+			_discovered[str(id)] = true
+	for id in visited_list:
+		if get_by_id(str(id)) != null:
+			_visited[str(id)] = true
+
+
 ## Marks every location whose cell is explored as discovered; returns the new ones.
 func discover_explored(fog: FogOfWar) -> Array[Location]:
 	var found: Array[Location] = []

@@ -10,4 +10,9 @@ Record only observations found during approved work. An item here is **not** per
 | 2026-11-17 | Location banners and the route-time label are world-space text, so they become small at the minimum zoom (about 0.52). | Prototype 001 visual check |
 | 2026-11-17 | Companions follow the trail but don't avoid each other. When the party turns sharply, Ember (flying) can briefly overlap Moss. | Prototype 001 companion following |
 | 2026-11-17 | The template-art generator (`tools/art/`) needs node, Playwright and Chromium in addition to Python with numpy and Pillow. | Reproducing `template_` art |
-| 2026-11-17 | There is no save/load. A session always restarts at Day 1, 08:00 at the camp. | Prototype 001 |
+| 2026-11-17 | ~~There is no save/load. A session always restarts at Day 1, 08:00 at the camp.~~ Resolved by Prototype 002 (manual save/load). | Prototype 001 |
+| 2026-11-17 | The nest sprite still shows three eggs after one has been taken. Only the encounter text changes. | Prototype 002 egg discovery |
+| 2026-11-17 | There is no autosave: quitting without saving (F5) loses progress. There is a single save slot, and the save format only checks its version number, with no migration between versions. | Prototype 002 save/load |
+| 2026-11-17 | Saves are JSON, so numbers inside the reserved `DragonRecord.genome` load back as floats. Future genetics data should not rely on integer types. | Prototype 002 dragon records |
+| 2026-11-17 | Juvenile Cinderwings reuse the adult (Ember) template at 80% size; there is no dedicated juvenile art. The Fernback species data has no egg source or egg art yet. | Prototype 002 growth stages |
+| 2026-11-17 | The hover route-time label is drawn under trees and landmarks, so it can be partly hidden in forests. | Seen during Prototype 002 screenshots; behaviour from Prototype 001 |

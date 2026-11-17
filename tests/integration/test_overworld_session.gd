@@ -6,7 +6,7 @@ var session: OverworldSession
 
 func before_each() -> void:
 	session = OverworldSession.new(ElderwoodVale.create_map(), ElderwoodVale.create_locations(),
-		StartingParty.create(), ElderwoodVale.START_CELL, ElderwoodVale.START_MINUTES)
+		StartingDragons.create_roster(), ElderwoodVale.START_CELL, ElderwoodVale.START_MINUTES)
 	session.begin()
 
 
