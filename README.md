@@ -1,37 +1,76 @@
-# Godot / Claude Starter Pack — v1.2
+# DragonLands
 
-Reusable **development instructions and design conventions** for future Godot 4 projects; this is **not a game, a functioning asset loader, or an implemented test framework**. We improve this pack with the user, ChatGPT and Claude before promoting a reviewed version to `main`.
+An original 2D fantasy dragon game built with **Godot 4.7** (GL Compatibility renderer).
+Current state: **Prototype 001 — The Living Overworld**, a small playable exploration slice.
 
-## Contents
+Lead your adventurer through the handcrafted *Elderwood Vale* with two companion dragons, Ember (a flying
+Cinderwing drake) and Moss (a ground-walking Fernback wyrm). Roads, a river and lake, deep forests and a
+mountain range shape the routes; fog lifts as you explore, and a wild dragon nests somewhere in the peaks.
+Time flows continuously while you travel: no turns, movement points or End Turn button.
 
-| File | Responsibility |
+## Run
+
+Open the folder in Godot 4.7.x and press **F5**, or:
+
+```bash
+godot --path .
+```
+
+No executable or installer is produced. Exports need explicit approval (see `docs/GODOT_CLAUDE_GUIDELINES.md`).
+
+## Controls
+
+| Input | Action |
 | --- | --- |
-| `CLAUDE.md` | Claude's entry point, preflight and work modes |
-| `docs/GODOT_CLAUDE_GUIDELINES.md` | Single authority for engineering, source control, scope and delivery rules |
-| `docs/DESIGN_WORKFLOW.md` | User / ChatGPT / Claude decision and handoff process |
-| `docs/PROJECT_BRIEF.md` | Single record for each game's design and approved current objective |
-| `docs/BACKLOG.md` | Deferred observations, never implicit authorization |
-| `assets/README.md` | Runtime art/audio override contract (`template_` fallbacks) |
-| `custom/` | User-owned override folder (`graphics/`, `audio/`); `.gdignore` keeps Godot from importing/packing it |
-| `tests/README.md` | Module, integration, manual and environment test expectations |
-| `.gitignore` | Editor-generated, local and binary artifacts ignored by default |
+| Left-click | Travel there. A dotted route and an estimated travel time are previewed on hover. Clicking into fog walks toward that spot as far as explored land allows, and extends the route as the fog clears. |
+| Right- or middle-drag, WASD / arrow keys | Pan the camera |
+| Mouse wheel | Zoom toward the cursor |
+| Space / C | Camera follows the adventurer again |
 
-## Pilot this master pack
+## Tests (GUT 9.7.1, headless)
 
-1. Review the rules and check for gaps or needless complexity with Claude Code in **review-only mode**.
-2. Approve changes explicitly. Keep review edits on a working branch, then inspect and merge to `main` only after approval.
-3. When stable, optionally mark `_StarterGodotPack` as a **GitHub template repository**.
-4. For a new project, choose **Use this template**, then complete `docs/PROJECT_BRIEF.md` and hold a design review **before any game code**.
+```bash
+godot --headless --path . --import
+```
 
-### Starter review prompt
+```bash
+godot --headless --path . -s res://addons/gut/gut_cmdln.gd
+```
 
-> This is the `_StarterGodotPack` reusable template, not a game. Read `CLAUDE.md` and all referenced guidance. Review for contradictory rules, real Godot 4 pitfalls, unnecessary complexity and scope creep. Propose minimal improvements with trade-offs. Do not edit files, create branches, generate game code or export a build without my explicit approval.
+The second command runs every test in `tests/unit/` and `tests/integration/` (config: `.gutconfig.json`).
+GUT is vendored unchanged in `addons/gut` (MIT licence, `addons/gut/LICENSE.md`).
 
-## Reuse in a game repository
+## Code layout
 
-- **Replace this README with the game's README.** Preserve `CLAUDE.md`, the rules and relevant conventions; fill out `docs/PROJECT_BRIEF.md` only with user-confirmed decisions.
-- `src/<module>/`, automated tests and the minimal asset resolver are introduced when an approved game objective needs them—not prebuilt speculatively in this template.
-- The runtime override behavior (Windows/Linux, effective after restarting the game) is required in games that use replaceable assets. This documentation **does not itself implement that loader**; the first relevant implementation must test it.
-- Template updates do **not** automatically flow into existing games. Review changes case by case.
+| Module | Responsibility |
+| --- | --- |
+| `src/world/` | Terrain types, region grid (`RegionMap`), handcrafted region data (`regions/elderwood_vale.gd`), terrain/decor rendering |
+| `src/navigation/` | Terrain-weighted A* that only routes through explored land; route preview drawing |
+| `src/travel/` | Moving along a route (`PathFollower`) and the adventurer actor |
+| `src/companions/` | Dragon identity records (`DragonProfile`), breadcrumb following (`FollowTrail`), companion actors |
+| `src/exploration/` | Fog of war, locations and their discovery, fog and landmark rendering |
+| `src/time/` | Continuous world clock and daylight tint |
+| `src/encounters/` | Encounter content (text, choices, time costs) |
+| `src/overworld/` | `OverworldSession` (rules and state, no Nodes) and the entry scene that wires the views |
+| `src/camera/`, `src/ui/` | Map camera; HUD and encounter panel |
+| `src/assets/` | `AssetResolver`, the single entry point for replaceable graphics |
 
-**Operating principle:** Build what's needed. Test it. Preserve what works. Report what was discovered. Then stop.
+## Replacing the art
+
+Every graphic is loaded by logical name through `AssetResolver` (contract: `assets/README.md`). To override one,
+put a PNG with the same logical path in `custom/graphics/` and restart the game. For example,
+`custom/graphics/dragons/ember.png` replaces `assets/graphics/dragons/template_ember.png`. Missing or broken
+overrides fall back to the template art with a warning. Keep each override's proportions close to the template's so it
+stands on the same ground point (see `src/world/sprite_anchor.gd`).
+
+Logical names: `terrain/{grass, forest_floor, road, water, rock}` (seamless 256 px tiles), `fog/clouds`,
+`decor/{tree_oak, tree_pine, bush, rocks, mountain_a, mountain_b, bridge}`,
+`landmarks/{camp, watchtower, lodge, standing_stones, dragon_nest}`, `actors/adventurer`, `dragons/{ember, moss}`.
+
+All `template_` art is original and generated by `tools/art/generate_template_art.py` (numpy/Pillow textures
+and hand-written SVG shapes rendered with headless Chromium through Playwright).
+
+## Project rules
+
+`CLAUDE.md` → `docs/GODOT_CLAUDE_GUIDELINES.md` (the authoritative rules), `docs/DESIGN_WORKFLOW.md`,
+`docs/PROJECT_BRIEF.md` (decisions and the current objective), `docs/BACKLOG.md` (deferred observations).
