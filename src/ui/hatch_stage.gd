@@ -18,12 +18,27 @@ var _hatchling: Texture2D
 var _time := -1.0
 var _did_burst := false
 var _particles: Array[Dictionary] = []
+var _hatchling_rect := TextureRect.new()  ## Separate node so it can carry the recolour material.
+var _fx := Control.new()  ## Draws shell fragments and sparkles above the hatchling.
 
 
-func play(egg: Texture2D, cracked: Texture2D, hatchling: Texture2D) -> void:
+func _ready() -> void:
+	_hatchling_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_hatchling_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hatchling_rect.visible = false
+	add_child(_hatchling_rect)
+	_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fx.draw.connect(_draw_particles)
+	add_child(_fx)
+
+
+func play(egg: Texture2D, cracked: Texture2D, hatchling: Texture2D, hatchling_material: Material = null) -> void:
 	_egg = egg
 	_cracked = cracked
 	_hatchling = hatchling
+	_hatchling_rect.texture = hatchling
+	_hatchling_rect.material = hatchling_material
+	_hatchling_rect.visible = false
 	_time = 0.0
 	_did_burst = false
 	_particles.clear()
@@ -35,6 +50,15 @@ func finish() -> void:
 	if _time < CRACK_END:
 		_time = CRACK_END
 		_burst()
+		_place_hatchling()
+
+
+## Stops the animation (used when the panel closes early).
+func stop() -> void:
+	_time = -1.0
+	_particles.clear()
+	_hatchling_rect.visible = false
+	queue_redraw()
 
 
 func has_hatched() -> bool:
@@ -53,7 +77,10 @@ func _process(delta: float) -> void:
 		p.rot += p.spin * delta
 		p.life -= delta
 	_particles = _particles.filter(func(p: Dictionary) -> bool: return p.life > 0.0)
+	_place_hatchling()
 	queue_redraw()
+	_fx.size = size
+	_fx.queue_redraw()
 
 
 func _burst() -> void:
@@ -101,29 +128,38 @@ func _draw() -> void:
 		draw_set_transform(ground - Vector2(0, hop), angle, Vector2.ONE)
 		draw_texture_rect(tex, Rect2(Vector2(-size_px.x * 0.5, -size_px.y * 0.93), size_px), false)
 		draw_set_transform_matrix(Transform2D.IDENTITY)
-	elif _hatchling:
-		var t := clampf((_time - CRACK_END) / POP_TIME, 0.0, 1.0)
-		var pop := _elastic(t)
-		var bob := sin(_time * 3.2) * 3.0 if t >= 1.0 else 0.0
-		var size_px := _hatchling.get_size() * HATCHLING_SCALE
-		draw_set_transform(ground + Vector2(0, bob), 0.0, Vector2(pop, pop))
-		draw_texture_rect(_hatchling, Rect2(Vector2(-size_px.x * 0.5, -size_px.y * 0.93), size_px), false)
-		draw_set_transform_matrix(Transform2D.IDENTITY)
 
+
+func _place_hatchling() -> void:
+	if not _did_burst or _hatchling == null:
+		return
+	var ground := Vector2(size.x * 0.5, _egg_center().y + _egg.get_height() * EGG_SCALE * 0.42)
+	var t := clampf((_time - CRACK_END) / POP_TIME, 0.0, 1.0)
+	var pop := maxf(0.01, _elastic(t))
+	var bob := sin(_time * 3.2) * 3.0 if t >= 1.0 else 0.0
+	var size_px := _hatchling.get_size() * HATCHLING_SCALE
+	_hatchling_rect.visible = true
+	_hatchling_rect.size = size_px
+	_hatchling_rect.pivot_offset = Vector2(size_px.x * 0.5, size_px.y * 0.93)
+	_hatchling_rect.position = ground - _hatchling_rect.pivot_offset + Vector2(0, bob)
+	_hatchling_rect.scale = Vector2(pop, pop)
+
+
+func _draw_particles() -> void:
 	for p in _particles:
 		var alpha := clampf(p.life, 0.0, 1.0)
 		if p.kind == "shell":
-			draw_set_transform(p.pos, p.rot, Vector2.ONE)
+			_fx.draw_set_transform(p.pos, p.rot, Vector2.ONE)
 			var s: float = p.size
 			var shard := PackedVector2Array([Vector2(-s, -s * 0.4), Vector2(s * 0.6, -s * 0.7), Vector2(s, s * 0.5), Vector2(-s * 0.3, s * 0.6)])
-			draw_colored_polygon(shard, Color(0.97, 0.9, 0.76, alpha))
-			draw_polyline(shard + PackedVector2Array([shard[0]]), Color(0.16, 0.13, 0.09, alpha), 1.5, true)
-			draw_set_transform_matrix(Transform2D.IDENTITY)
+			_fx.draw_colored_polygon(shard, Color(0.97, 0.9, 0.76, alpha))
+			_fx.draw_polyline(shard + PackedVector2Array([shard[0]]), Color(0.16, 0.13, 0.09, alpha), 1.5, true)
+			_fx.draw_set_transform_matrix(Transform2D.IDENTITY)
 		else:
 			var s: float = p.size
 			var c := Color(1.0, 0.86, 0.45, alpha)
-			draw_line(p.pos - Vector2(s, 0), p.pos + Vector2(s, 0), c, 2.0, true)
-			draw_line(p.pos - Vector2(0, s), p.pos + Vector2(0, s), c, 2.0, true)
+			_fx.draw_line(p.pos - Vector2(s, 0), p.pos + Vector2(s, 0), c, 2.0, true)
+			_fx.draw_line(p.pos - Vector2(0, s), p.pos + Vector2(0, s), c, 2.0, true)
 
 
 static func _elastic(t: float) -> float:

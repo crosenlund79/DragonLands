@@ -6,6 +6,9 @@ extends RefCounted
 signal time_changed(total_minutes: float)
 
 const MINUTES_PER_DAY := 1440.0
+## Tolerance for comparing summed clock times with thresholds (ages, cooldowns, incubation),
+## so a threshold reached by adding the exact remaining time always counts as reached.
+const EPSILON := 0.001
 
 var total_minutes: float
 
@@ -60,6 +63,10 @@ func phase_name() -> String:
 
 static func format_duration(minutes: float) -> String:
 	var total := int(round(minutes))
+	if total >= 24 * 60:
+		var days := floori(total / 1440.0)
+		var hours := floori((total - days * 1440) / 60.0)
+		return "%dd" % days if hours == 0 else "%dd %dh" % [days, hours]
 	if total < 60:
 		return "%dm" % total
 	if total % 60 == 0:

@@ -17,8 +17,11 @@ const DATA := {
 		"cracked_egg_art": "eggs/cinderwing_cracked",
 		"hatchling_art": "dragons/cinderwing_hatchling",
 		"adult_art": "dragons/ember",
+		# Average colours of the template art's regions (so Ember's genome reproduces its art).
+		"colors": {"primary": Vector3(0.040, 0.78, 0.82), "secondary": Vector3(0.109, 0.61, 0.96),
+			"accent": Vector3(0.038, 0.76, 0.69)},
+		"wild_color_spread": Vector3(0.06, 0.15, 0.12),
 		"temperaments": ["Bold", "Curious", "Playful", "Watchful", "Stubborn", "Gentle"],
-		"markings": ["Ash-speckled back", "Gold-rimmed scales", "Soot-dark wingtips", "Bright ember belly", "Flame-tipped tail"],
 		"hatchling_names": ["Cinder", "Flicker", "Kindle", "Pyra", "Smoulder", "Tinder", "Sparrow", "Ashby", "Fennel", "Blaze"],
 	},
 	"fernback": {
@@ -32,8 +35,10 @@ const DATA := {
 		"adult_at_days": 5.0,
 		"hatchling_art": "dragons/moss",
 		"adult_art": "dragons/moss",
+		"colors": {"primary": Vector3(0.303, 0.49, 0.58), "secondary": Vector3(0.208, 0.37, 0.85),
+			"accent": Vector3(0.280, 0.52, 0.72)},
+		"wild_color_spread": Vector3(0.06, 0.15, 0.12),
 		"temperaments": ["Calm", "Curious", "Shy", "Patient", "Cheerful"],
-		"markings": ["Teal dapples", "Curled frond crest", "Mossy flanks", "Bark-brown horns"],
 	},
 }
 

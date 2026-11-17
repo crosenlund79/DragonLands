@@ -55,3 +55,9 @@ func load_array(entries: Array) -> bool:
 	_dragons = loaded
 	changed.emit()
 	return true
+
+
+## Replaces the whole collection (used after a save was validated and migrated).
+func set_all(items: Array[DragonRecord]) -> void:
+	_dragons = items.duplicate()
+	changed.emit()

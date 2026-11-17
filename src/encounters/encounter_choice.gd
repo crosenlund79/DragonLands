@@ -7,6 +7,8 @@ const ACTION_NONE := ""
 const ACTION_TAKE_EGG := "take_egg"  ## Gain one egg of `species` (once per location).
 const ACTION_WARM_EGG := "warm_egg"  ## Wait until the soonest egg is ready, then hatch it.
 const ACTION_HATCH_EGG := "hatch_egg"  ## Hatch a ready egg.
+const ACTION_OPEN_COLLECTION := "open_collection"  ## Open the dragon collection (party & breeding).
+const ACTION_REST_UNTIL := "rest_until"  ## Rest until the next dragon/egg milestone.
 
 var id: String
 var label: String

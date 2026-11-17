@@ -34,7 +34,7 @@ func _ready() -> void:
 	center.add_child(box)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 12)
-	col.custom_minimum_size = Vector2(560, 0)
+	col.custom_minimum_size = Vector2(720, 0)
 	box.add_child(col)
 	_title = UiStyle.label("", 28, Color(1.0, 0.88, 0.6))
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -76,7 +76,8 @@ func _ready() -> void:
 	col.add_child(_details)
 
 
-func open(egg: EggRecord, egg_tex: Texture2D, cracked_tex: Texture2D, hatchling_tex: Texture2D) -> void:
+func open(egg: EggRecord, egg_tex: Texture2D, cracked_tex: Texture2D, hatchling_tex: Texture2D,
+		hatchling_material: Material = null) -> void:
 	_egg = egg
 	_name_attempt = 0
 	_title.text = "Something stirs inside the egg..."
@@ -90,7 +91,8 @@ func open(egg: EggRecord, egg_tex: Texture2D, cracked_tex: Texture2D, hatchling_
 	_details.visible = false
 	_name_edit.text = Hatching.suggest_name(egg, 0)
 	_update_confirm()  # Real text now, so the reserved row has its final height.
-	_stage.play(egg_tex, cracked_tex, hatchling_tex)
+	_stage.custom_minimum_size = Vector2(560, 290)
+	_stage.play(egg_tex, cracked_tex, hatchling_tex, hatchling_material)
 	visible = true
 
 
@@ -114,6 +116,8 @@ func submit_name(text: String) -> void:
 
 
 func _on_hatched() -> void:
+	if not visible or _egg == null:
+		return
 	_title.text = "A %s hatchling!" % _egg.species().short_name
 	_naming = true
 	_name_edit.editable = true
@@ -141,35 +145,41 @@ func _confirm_name() -> void:
 	name_confirmed.emit(_egg.id, Hatching.sanitize_name(_name_edit.text, Hatching.suggest_name(_egg, _name_attempt)))
 
 
-## Shows the new dragon's characteristics after the session created it.
-func show_dragon(dragon: DragonRecord, now: float) -> void:
+## Shows the new dragon's characteristics, genes, parents and inheritance after hatching.
+func show_dragon(dragon: DragonRecord, now: float, lineage: LineageBook) -> void:
 	var species := dragon.species()
 	_title.text = dragon.name
 	_naming = false
 	_name_row.visible = false
 	_confirm.visible = false
+	_stage.custom_minimum_size = Vector2(560, 170)
 	_clear(_details)
 	_details.visible = true
-	var lines := [
-		["Species", species.name],
-		["Element", species.element],
+	var info := GridContainer.new()
+	info.columns = 2
+	info.add_theme_constant_override("h_separation", 16)
+	info.add_theme_constant_override("v_separation", 2)
+	for line in [
+		["Species", "%s · %s element" % [species.name, species.element]],
 		["Temperament", str(dragon.traits.get("temperament", "-"))],
-		["Markings", str(dragon.traits.get("markings", "-"))],
 		["Growth", "%s (hatched %s)" % [DragonSpecies.STAGE_NAMES[dragon.stage(now)], _when(dragon.born_at_minutes)]],
+		["Lineage", DragonSheet.parents_text(dragon, lineage)],
 		["Origin", dragon.origin],
-	]
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 4)
-	for line in lines:
-		grid.add_child(UiStyle.label(line[0], 15, UiStyle.GOLD))
-		var value := UiStyle.label(line[1], 16)
+	]:
+		info.add_child(UiStyle.label(line[0], 15, UiStyle.GOLD))
+		var value := UiStyle.label(line[1], 15)
 		value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		value.custom_minimum_size = Vector2(400, 0)
-		grid.add_child(value)
-	_details.add_child(grid)
-	var done := UiStyle.button("%s joins your travelling dragons" % dragon.name)
+		value.custom_minimum_size = Vector2(560, 0)
+		info.add_child(value)
+	_details.add_child(info)
+	var genes := HBoxContainer.new()
+	genes.add_theme_constant_override("separation", 28)
+	genes.add_child(DragonSheet.appearance(dragon.genome))
+	genes.add_child(DragonSheet.traits(dragon.genome))
+	_details.add_child(genes)
+	if not dragon.inheritance_notes.is_empty():
+		_details.add_child(DragonSheet.notes(dragon.inheritance_notes, "HOW IT INHERITED ITS GENES"))
+	var done := UiStyle.button("Welcome %s to the collection" % dragon.name)
 	done.pressed.connect(close)
 	_details.add_child(done)
 
@@ -179,6 +189,7 @@ func close() -> void:
 		return
 	visible = false
 	_egg = null
+	_stage.stop()
 	finished.emit()
 
 

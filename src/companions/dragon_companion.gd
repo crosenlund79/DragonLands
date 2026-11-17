@@ -28,12 +28,17 @@ func setup(p_record: DragonRecord, assets: AssetResolver, trail: FollowTrail, sl
 	record = p_record
 	_assets = assets
 	_trail = trail
-	_slot = SLOTS[slot_index % SLOTS.size()] + Vector2(28.0 * (slot_index / SLOTS.size()), 0.0)
+	set_slot(slot_index)
 	add_child(_sprite)
 	update_growth(now)
 	position = trail.point_behind(_slot.x)
 	_last_position = position
 	_time = randf() * TAU
+
+
+## Where in the party line this dragon walks (distance behind / side offset).
+func set_slot(slot_index: int) -> void:
+	_slot = SLOTS[slot_index % SLOTS.size()]
 
 
 ## Refreshes art, scale and flight for the dragon's growth stage at world time `now`.
@@ -47,6 +52,7 @@ func update_growth(now: float) -> void:
 		_art = art
 		_sprite.texture = _assets.get_texture(art)
 		SpriteAnchor.apply(_sprite, art)
+		_sprite.material = DragonLook.material_for(record.genome, art, _assets, record.id)  # Inherited colours.
 
 
 func is_flying() -> bool:

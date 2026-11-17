@@ -1,8 +1,7 @@
 class_name DragonRecord
 extends RefCounted
 ## One individual dragon: a persistent identity that outlives scenes and saves.
-## Fields marked "reserved" give future genetics/breeding a home without
-## implementing any inheritance now.
+## Its Genome (colours, markings, traits) comes from its egg and never changes.
 
 var id: String  ## Unique within a save, never reused.
 var name: String
@@ -10,11 +9,15 @@ var species_id: String
 var born_at_minutes: float  ## World time of hatching (negative = before the story began).
 var origin: String  ## Human-readable provenance.
 var art: String = ""  ## Optional individual art; "" = species art for the growth stage.
-var traits: Dictionary = {}  ## Expressed characteristics, e.g. {"temperament": "Bold"}.
-var genome: Dictionary = {}  ## Reserved: heritable data, empty until genetics exist (saved as JSON: numbers load as floats).
-var parent_ids: PackedStringArray = PackedStringArray()  ## Reserved: empty for wild-born dragons.
-var generation: int = 0  ## Reserved: 0 = wild stock.
+const NEVER := -1.0e9
+
+var traits: Dictionary = {}  ## Personality, e.g. {"temperament": "Bold"} (not inherited).
+var genome: Genome  ## Heritable makeup; null only while migrating an old save.
+var parent_ids: PackedStringArray = PackedStringArray()  ## Empty for wild-born dragons.
+var generation: int = 0  ## 0 = wild stock; offspring = highest parent generation + 1.
 var mutations: PackedStringArray = PackedStringArray()  ## Reserved: always empty for now.
+var last_bred_at: float = NEVER  ## World time this dragon last bred (for its cooldown).
+var inheritance_notes: PackedStringArray = PackedStringArray()  ## How its genes were inherited.
 
 
 func species() -> DragonSpecies:
@@ -43,10 +46,12 @@ func to_dict() -> Dictionary:
 		"origin": origin,
 		"art": art,
 		"traits": traits.duplicate(true),
-		"genome": genome.duplicate(true),
+		"genome": genome.to_dict() if genome != null else {},
 		"parents": Array(parent_ids),
 		"generation": generation,
 		"mutations": Array(mutations),
+		"bred_at": last_bred_at,
+		"notes": Array(inheritance_notes),
 	}
 
 
@@ -62,8 +67,11 @@ static func from_dict(data: Dictionary) -> DragonRecord:
 	r.origin = str(data.get("origin", ""))
 	r.art = str(data.get("art", ""))
 	r.traits = (data.get("traits", {}) as Dictionary).duplicate(true)
-	r.genome = (data.get("genome", {}) as Dictionary).duplicate(true)
+	var genome_data: Variant = data.get("genome", {})
+	r.genome = Genome.from_dict(genome_data) if genome_data is Dictionary else null
 	r.parent_ids = PackedStringArray(data.get("parents", []))
 	r.generation = int(data.get("generation", 0))
 	r.mutations = PackedStringArray(data.get("mutations", []))
+	r.last_bred_at = float(data.get("bred_at", NEVER))
+	r.inheritance_notes = PackedStringArray(data.get("notes", []))
 	return r

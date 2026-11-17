@@ -62,8 +62,13 @@ static func create_locations() -> LocationRegistry:
 				EncounterChoice.new("hatch", "Hatch the egg", "", 0.0, 0.0, EncounterChoice.ACTION_HATCH_EGG),
 				EncounterChoice.new("warm", "Keep the egg warm until it hatches", "", 0.0, 0.0,
 					EncounterChoice.ACTION_WARM_EGG),
+				EncounterChoice.new("tend", "Tend your dragons: collection, party & breeding", "", 0.0, 0.0,
+					EncounterChoice.ACTION_OPEN_COLLECTION),
+				EncounterChoice.new("rest_until", "Rest until", "", 0.0, 0.0, EncounterChoice.ACTION_REST_UNTIL),
 				EncounterChoice.new("rest", "Rest by the fire (1h)",
 					"You rest a while. Moss curls around your boots; Ember keeps one golden eye on the road.", 60.0),
+				EncounterChoice.new("rest_day", "Rest for a day (24h)",
+					"A whole day by the fire: stories, naps and roasted roots. The dragons grow a little.", 24.0 * 60.0),
 				EncounterChoice.new("leave", "Set out"),
 			])))
 	registry.add(Location.new("watchtower", "Old Watchtower", Vector2i(32, 9), Location.Kind.LOOKOUT,

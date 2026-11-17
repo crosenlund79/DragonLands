@@ -8,7 +8,8 @@ func _record(id: String = "dragon-1") -> DragonRecord:
 	r.species_id = "cinderwing"
 	r.born_at_minutes = 600.0
 	r.origin = "Hatched at Wayfarer's Camp"
-	r.traits = {"temperament": "Bold", "markings": "Gold-rimmed scales"}
+	r.traits = {"temperament": "Bold"}
+	r.genome = StartingDragons.canonical_genome("ember")
 	return r
 
 
@@ -44,23 +45,25 @@ func test_art_and_flight_follow_growth_stage() -> void:
 	assert_eq(r.art_at(600.0), "dragons/ember", "individual art wins")
 
 
-func test_record_round_trips_including_reserved_genetics_fields() -> void:
+func test_record_round_trips_including_genetics_and_lineage() -> void:
 	var r := _record()
-	r.genome = {"future": {"locus": ["a", "b"], "weight": 0.5}}  # JSON numbers come back as floats
+	r.genome = GeneticsEngine.breed(r.genome, StartingDragons.canonical_genome("ember"), 7)
 	r.parent_ids = PackedStringArray(["dragon-a", "dragon-b"])
 	r.generation = 2
+	r.last_bred_at = 1234.5
+	r.inheritance_notes = PackedStringArray(["Keen Sight II: carried by both parents"])
 	var copy := DragonRecord.from_dict(JSON.parse_string(JSON.stringify(r.to_dict())))
 	assert_eq(copy.to_dict(), r.to_dict())
 	assert_eq(copy.generation, 2)
 	assert_eq(copy.parent_ids, PackedStringArray(["dragon-a", "dragon-b"]))
 
 
-func test_new_records_start_as_wild_stock_with_empty_genetics() -> void:
+func test_new_records_start_as_wild_stock() -> void:
 	var r := DragonRecord.new()
 	assert_eq(r.generation, 0)
 	assert_true(r.parent_ids.is_empty())
-	assert_true(r.genome.is_empty())
 	assert_true(r.mutations.is_empty())
+	assert_eq(r.last_bred_at, DragonRecord.NEVER)
 
 
 func test_invalid_records_are_rejected() -> void:

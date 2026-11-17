@@ -63,13 +63,23 @@ func test_hatching_creates_a_named_wild_hatchling() -> void:
 	assert_eq(dragon.generation, 0)
 	assert_true(dragon.parent_ids.is_empty())
 	assert_has(egg.species().temperaments, dragon.traits.temperament)
-	assert_has(egg.species().markings, dragon.traits.markings)
+	assert_true(dragon.genome.same_as(egg.genome), "the hatchling gets exactly the egg's genes")
 
 
 func test_same_egg_always_hatches_the_same_characteristics() -> void:
 	var a := Hatching.hatch(_egg("egg-1", 0.0, 1234), "d1", "A", 900.0, "")
 	var b := Hatching.hatch(_egg("egg-1", 0.0, 1234), "d2", "B", 900.0, "")
 	assert_eq(a.traits, b.traits)
+	assert_true(a.genome.same_as(b.genome))
+
+
+func test_genes_are_fixed_when_the_egg_is_created() -> void:
+	var egg := _egg("egg-1", 0.0, 4321)
+	assert_not_null(egg.genome, "wild eggs get their genes immediately")
+	var saved := EggRecord.from_dict(JSON.parse_string(JSON.stringify(egg.to_dict())))
+	assert_true(saved.genome.same_as(egg.genome), "reloading cannot re-roll them")
+	var dragon := Hatching.hatch(saved, "d1", "Pip", egg.incubation_minutes, "")
+	assert_true(dragon.genome.same_as(egg.genome))
 
 
 func test_names_are_sanitised_with_a_fallback() -> void:

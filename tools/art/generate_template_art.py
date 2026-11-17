@@ -14,6 +14,7 @@ Requires: numpy, Pillow, node + playwright (Chromium).
 """
 import json
 import math
+import re
 import random
 import subprocess
 import tempfile
@@ -710,6 +711,34 @@ SPRITES = {
     "dragons/cinderwing_hatchling": cinderwing_hatchling,
 }
 
+# Recolour masks (Prototype 003): the same SVG with its palette mapped to region colours.
+# Red = primary (body), green = secondary (belly), blue = accent (wings / fronds);
+# black = keep the original pixel (outline, eyes, horns, flame). No grain is added.
+R, G, B = "#ff0000", "#00ff00", "#0000ff"
+MASKS = {
+    "dragons/ember_mask": (dragon_ember, {
+        "#e86a34": R, "#b8402a": R, "#c4502c": R,
+        "#f6c060": G,
+        "#f08a45": B, "#b8442a": B, "#9a3420": B, "#7a2614": B, "#8e2f1c": B, "#ffc07a": B,
+    }),
+    "dragons/moss_mask": (dragon_moss, {
+        "#6faa52": R, "#4c8540": R, "#3d6c35": R, "#4f8a44": R,  # teal dapples stay: a Fernback feature
+        "#c4d888": G,
+        "#8fd16a": B, "#4f8a3a": B,
+    }),
+    "dragons/cinderwing_hatchling_mask": (cinderwing_hatchling, {
+        "#f08444": R, "#c9482a": R, "#a83a22": R, "#d0542e": R, "#e86a34": R,
+        "#f6c86a": G,
+        "#b8442a": B, "#f08a45": B,
+    }),
+}
+
+
+def mask_svg(text, mapping):
+    """Maps every #rrggbb in the SVG to its region colour (unlisted colours -> black)."""
+    return re.sub(r"#[0-9a-fA-F]{6}\b", lambda m: mapping.get(m.group(0).lower(), "#000000"), text)
+
+
 TEXTURES = {
     "terrain/grass": terrain_grass,
     "terrain/forest_floor": terrain_forest_floor,
@@ -740,12 +769,16 @@ def main():
         save(fn(_PyRng(100 + i)), template_path(logical))
     with tempfile.TemporaryDirectory() as tmp:
         jobs = []
-        for logical, fn in SPRITES.items():
+        sources = [(logical, fn(), True) for logical, fn in SPRITES.items()]
+        for logical, (fn, mapping) in MASKS.items():
             w, h, text = fn()
+            sources.append((logical, (w, h, mask_svg(text, mapping)), False))
+        for logical, (w, h, text), grain in sources:
             svg_path = Path(tmp) / (logical.replace("/", "_") + ".svg")
             svg_path.write_text(text)
             png = Path(tmp) / (logical.replace("/", "_") + ".png")
-            jobs.append({"svg": str(svg_path), "png": str(png), "width": w, "height": h, "scale": 2, "logical": logical})
+            jobs.append({"svg": str(svg_path), "png": str(png), "width": w, "height": h, "scale": 2,
+                         "logical": logical, "grain": grain})
         jobs_file = Path(tmp) / "jobs.json"
         jobs_file.write_text(json.dumps(jobs))
         subprocess.run(["node", str(HERE / "render_svg.js"), str(jobs_file)], check=True, cwd=HERE)
@@ -755,7 +788,8 @@ def main():
             dest = OUT / template_path(job["logical"])
             dest.parent.mkdir(parents=True, exist_ok=True)
             small.save(dest)
-            add_grain(dest, 500 + i)
+            if job["grain"]:
+                add_grain(dest, 500 + i)
             print("wrote", dest.relative_to(ROOT))
 
 

@@ -66,3 +66,9 @@ func load_array(entries: Array) -> bool:
 	_eggs = loaded
 	changed.emit()
 	return true
+
+
+## Replaces the whole collection (used after a save was validated and migrated).
+func set_all(items: Array[EggRecord]) -> void:
+	_eggs = items.duplicate()
+	changed.emit()

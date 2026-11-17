@@ -15,8 +15,10 @@ var camera: OverworldCamera
 var hud: Hud
 var encounter_panel: EncounterPanel
 var hatching_panel: HatchingPanel
+var collection_screen: CollectionScreen
+var camp_residents: CampResidents
 var trail := FollowTrail.new()
-var companions: Array[DragonCompanion] = []
+var companions: Array[DragonCompanion] = []  ## Travelling dragons only, in party order.
 
 var _world: Node2D
 var _preview: PathPreview
@@ -73,8 +75,11 @@ func _ready() -> void:
 	adventurer.setup(map, assets, map.cell_to_world(session.adventurer_cell))
 	_world.add_child(adventurer)
 	_seed_trail(adventurer.position)
-	for dragon in session.roster.all():
-		_add_companion(dragon)
+	_rebuild_companions()
+	camp_residents = CampResidents.new()
+	add_child(camp_residents)
+	camp_residents.setup(session, assets, _world,
+		map.cell_to_world(session.locations.get_by_id("camp").cell) + Vector2(0, RegionMap.CELL_SIZE * 0.3))
 
 	var fog_view := FogView.new()
 	fog_view.z_index = 3
@@ -95,6 +100,8 @@ func _ready() -> void:
 	ui.add_child(encounter_panel)
 	hatching_panel = HatchingPanel.new()
 	ui.add_child(hatching_panel)
+	collection_screen = CollectionScreen.new()
+	ui.add_child(collection_screen)
 
 	session.locations.discovered.connect(_on_location_discovered)
 	session.clock.time_changed.connect(_on_time_changed)
@@ -103,12 +110,18 @@ func _ready() -> void:
 	session.egg_ready.connect(_on_egg_ready)
 	session.hatch_requested.connect(_on_hatch_requested)
 	session.dragon_hatched.connect(_on_dragon_hatched)
+	session.egg_laid.connect(_on_egg_laid)
+	session.party_changed.connect(_on_party_changed)
+	session.collection_requested.connect(func() -> void: open_collection())
 	adventurer.moved.connect(_on_adventurer_moved)
 	adventurer.arrived.connect(_on_adventurer_arrived)
 	encounter_panel.choice_made.connect(_on_choice_made)
 	hatching_panel.name_confirmed.connect(_on_name_confirmed)
 	hud.save_requested.connect(save_game)
 	hud.load_requested.connect(load_game)
+	hud.collection_requested.connect(func() -> void: open_collection())
+	collection_screen.closed.connect(_on_collection_closed)
+	hatching_panel.finished.connect(_on_collection_closed)  # Same: back to the camp panel.
 
 	fog_view.setup(session.fog, map, assets, noise)
 	hud.setup(session, assets)
@@ -120,7 +133,19 @@ func _ready() -> void:
 
 
 func is_modal_open() -> bool:
-	return encounter_panel.is_open() or hatching_panel.is_open()
+	return encounter_panel.is_open() or hatching_panel.is_open() or collection_screen.is_open()
+
+
+## Opens the dragon collection (party and breeding work only at camp).
+func open_collection(tab: String = "collection") -> void:
+	encounter_panel.close()
+	collection_screen.open(session, assets, tab)
+
+
+func _on_collection_closed() -> void:
+	# Back at camp, return to the camp panel so hatching / resting stay one click away.
+	if session.at_camp() and not adventurer.is_travelling() and not is_modal_open():
+		open_encounter(session.locations.at_cell(session.adventurer_cell))
 
 
 ## Writes the current session to `path`. Returns true on success.
@@ -152,6 +177,13 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_TAB:
+		if collection_screen.is_open():
+			collection_screen.close()
+		elif not is_modal_open():
+			open_collection()
+		get_viewport().set_input_as_handled()
+		return
 	if is_modal_open():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -259,13 +291,14 @@ func _on_hatch_requested(egg: EggRecord) -> void:
 	encounter_panel.close()
 	var species := egg.species()
 	hatching_panel.open(egg, assets.get_texture(species.egg_art), assets.get_texture(species.cracked_egg_art),
-		assets.get_texture(species.hatchling_art))
+		assets.get_texture(species.hatchling_art),
+		DragonLook.material_for(egg.genome, species.hatchling_art, assets, "hatchling-" + egg.id))
 
 
 func _on_name_confirmed(egg_id: String, chosen_name: String) -> void:
 	var dragon := session.hatch_egg(egg_id, chosen_name)
 	if dragon != null:
-		hatching_panel.show_dragon(dragon, session.clock.total_minutes)
+		hatching_panel.show_dragon(dragon, session.clock.total_minutes, session.lineage)
 	else:
 		push_warning("Hatching refused for egg '%s'." % egg_id)
 		hatching_panel.close()
@@ -273,17 +306,46 @@ func _on_name_confirmed(egg_id: String, chosen_name: String) -> void:
 
 
 func _on_dragon_hatched(dragon: DragonRecord) -> void:
-	var companion := _add_companion(dragon)
-	companion.position = adventurer.position + Vector2(18, 6)
-	hud.show_toast("%s the %s joins your travelling dragons!" % [dragon.name, dragon.species().short_name], 4.0)
+	var where := "joins your travelling dragons" if session.is_travelling(dragon.id) else "rests at Wayfarer's Camp"
+	hud.show_toast("%s the %s %s!" % [dragon.name, dragon.species().short_name, where], 4.0)
+	camp_residents.rebuild()
 
 
-func _add_companion(dragon: DragonRecord) -> DragonCompanion:
-	var companion := DragonCompanion.new()
-	companion.setup(dragon, assets, trail, session.roster.index_of(dragon.id), session.clock.total_minutes)
-	_world.add_child(companion)
-	companions.append(companion)
-	return companion
+func _on_egg_laid(egg: EggRecord) -> void:
+	var names := Array(egg.parent_ids).map(func(id: String) -> String: return session.roster.get_by_id(id).name)
+	hud.show_toast("%s and %s produced an egg! It hatches in %s." % [names[0], names[1],
+		WorldClock.format_duration(egg.remaining_minutes(session.clock.total_minutes))], 5.0)
+
+
+func _on_party_changed() -> void:
+	_rebuild_companions()
+	if camp_residents != null:
+		camp_residents.rebuild()
+
+
+## Keeps one companion node per travelling dragon (in party order); new ones appear beside you.
+func _rebuild_companions() -> void:
+	var by_id := {}
+	for companion in companions:
+		by_id[companion.record.id] = companion
+	var kept: Array[DragonCompanion] = []
+	var index := 0
+	for dragon in session.party():
+		var companion: DragonCompanion = by_id.get(dragon.id)
+		if companion == null:
+			companion = DragonCompanion.new()
+			companion.setup(dragon, assets, trail, index, session.clock.total_minutes)
+			_world.add_child(companion)
+			if companions.size() > 0:
+				companion.position = adventurer.position + Vector2(20, 8)
+		else:
+			by_id.erase(dragon.id)
+			companion.set_slot(index)
+		kept.append(companion)
+		index += 1
+	for leftover in by_id.values():
+		leftover.queue_free()
+	companions = kept
 
 
 func _on_location_discovered(location: Location) -> void:
@@ -294,6 +356,8 @@ func _on_time_changed(_minutes: float) -> void:
 	_daylight.color = Daylight.color_at(session.clock.hour_of_day())
 	for companion in companions:
 		companion.update_growth(session.clock.total_minutes)
+	if camp_residents != null and _growth_changed():
+		camp_residents.rebuild()
 
 
 ## Lays a short breadcrumb trail behind the adventurer so the dragons start in line:
@@ -323,3 +387,16 @@ func _make_noise() -> Texture2D:
 	noise.fractal_octaves = 4
 	noise.seed = 7
 	return ImageTexture.create_from_image(noise.get_seamless_image(256, 256))
+
+
+var _last_stages := {}
+
+
+func _growth_changed() -> bool:
+	var changed := false
+	for dragon in session.roster.all():
+		var stage := dragon.stage(session.clock.total_minutes)
+		if _last_stages.get(dragon.id, -1) != stage:
+			_last_stages[dragon.id] = stage
+			changed = true
+	return changed

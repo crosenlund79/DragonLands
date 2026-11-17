@@ -51,6 +51,19 @@ func get_texture(logical_name: String) -> Texture2D:
 	return texture
 
 
+## True if `logical_name` has a user override or a packaged fallback (without loading it).
+func has_asset(logical_name: String) -> bool:
+	if _cache.has(logical_name):
+		return _sources.get(logical_name, "") != ""
+	if ResourceLoader.exists(fallback_path(logical_name)):
+		return true
+	var base := override_root.path_join("graphics").path_join(logical_name)
+	for ext in OVERRIDE_EXTENSIONS:
+		if override_root != "" and FileAccess.file_exists("%s.%s" % [base, ext]):
+			return true
+	return false
+
+
 ## Path the texture was loaded from ("" for the built-in placeholder). For tests/debugging.
 func get_source(logical_name: String) -> String:
 	get_texture(logical_name)

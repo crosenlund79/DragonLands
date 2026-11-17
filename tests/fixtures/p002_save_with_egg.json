@@ -1,0 +1,66 @@
+{
+	"adventurer_cell": [
+		4,
+		17
+	],
+	"clock_minutes": 855.0,
+	"discovered": [
+		"camp",
+		"watchtower",
+		"nest"
+	],
+	"dragons": [
+		{
+			"art": "dragons/ember",
+			"born_at": -43200.0,
+			"generation": 0,
+			"genome": {},
+			"id": "ember",
+			"mutations": [],
+			"name": "Ember",
+			"origin": "Travelled with you from the start",
+			"parents": [],
+			"species": "cinderwing",
+			"traits": {
+				"markings": "Soot-dark wingtips",
+				"temperament": "Bold, restless"
+			}
+		},
+		{
+			"art": "dragons/moss",
+			"born_at": -43200.0,
+			"generation": 0,
+			"genome": {},
+			"id": "moss",
+			"mutations": [],
+			"name": "Moss",
+			"origin": "Travelled with you from the start",
+			"parents": [],
+			"species": "fernback",
+			"traits": {
+				"markings": "Teal dapples",
+				"temperament": "Calm, curious"
+			}
+		}
+	],
+	"eggs": [
+		{
+			"acquired_at": 555.0,
+			"id": "egg-1",
+			"incubation": 720.0,
+			"origin": "nest",
+			"seed": 396274310,
+			"species": "cinderwing"
+		}
+	],
+	"eggs_taken": [
+		"nest"
+	],
+	"explored": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAAD//////wAAAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAAAP////////8AAAAAAAAAAAAAAAAAAP///////////////////////////wAAAAAA////////////AAAAAAAAAAAAAAAAAAD/////////////////////////AAAAAAAA/////////////wAAAAAAAAAAAAAAAAD/////////////////////////AAAAAAAA/////////////wAAAAAAAAAAAAAAAAAA//////////////////////8AAAAAAAAA/////////////wAAAAAAAAAAAAAAAAAAAP///////////////////wAAAAAAAAAA/////////////wAAAAAAAAAAAAAAAAAAAAD/////////////////AAAAAAAAAAAA/////////////wAAAAAAAAAAAAAAAAAAAAAAAP///////////wAAAAAAAAAAAAAA////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/AAAAAAAAAAAAAAAAAAAAAP////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+	"next_serial": 2,
+	"region": "Elderwood Vale",
+	"version": 1,
+	"visited": [
+		"watchtower"
+	]
+}

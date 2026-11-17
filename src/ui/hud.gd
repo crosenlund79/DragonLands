@@ -5,6 +5,7 @@ extends Control
 
 signal save_requested
 signal load_requested
+signal collection_requested
 
 var _session: OverworldSession
 var _assets: AssetResolver
@@ -57,9 +58,11 @@ func setup(session: OverworldSession, assets: AssetResolver) -> void:
 	# Save / load (top-right)
 	var file_row := HBoxContainer.new()
 	file_row.add_theme_constant_override("separation", 8)
+	var dragons_button := UiStyle.button("Dragons  (Tab)")
 	var save_button := UiStyle.button("Save  (F5)")
 	var load_button := UiStyle.button("Load  (F9)")
-	for b in [save_button, load_button]:
+	dragons_button.pressed.connect(func() -> void: collection_requested.emit())
+	for b in [dragons_button, save_button, load_button]:
 		b.add_theme_font_size_override("font_size", 14)
 		b.focus_mode = Control.FOCUS_NONE
 		file_row.add_child(b)
@@ -85,6 +88,7 @@ func setup(session: OverworldSession, assets: AssetResolver) -> void:
 	session.cell_changed.connect(func(_c: Vector2i) -> void: _refresh_area())
 	session.locations.discovered.connect(_on_discovered)
 	session.roster.changed.connect(_rebuild_party)
+	session.party_changed.connect(_rebuild_party)
 	session.eggs.changed.connect(_rebuild_eggs)
 	_rebuild_party()
 	_rebuild_eggs()
@@ -129,11 +133,21 @@ func _on_discovered(location: Location) -> void:
 func _rebuild_party() -> void:
 	_clear(_party_col)
 	_party_stages.clear()
-	_party_col.add_child(UiStyle.label("TRAVELLING DRAGONS", 13, UiStyle.GOLD))
+	var bonus := _session.scouting_bonus()
+	var header := "TRAVELLING DRAGONS"
+	if absf(bonus) > 0.001:
+		header += "  ·  scouting %+.2f" % bonus
+	_party_col.add_child(UiStyle.label(header, 13, UiStyle.GOLD))
 	var now := _session.clock.total_minutes
+	for dragon in _session.party():
+		_party_col.add_child(_dragon_row(dragon, now))
 	for dragon in _session.roster.all():
 		_party_stages[dragon.id] = dragon.stage(now)
-		_party_col.add_child(_dragon_row(dragon, now))
+	var resting := _session.roster.size() - _session.party_ids.size()
+	if resting > 0:
+		_party_col.add_child(UiStyle.label("+%d resting at Wayfarer's Camp" % resting, 13, UiStyle.MUTED))
+	elif _session.party_ids.is_empty():
+		_party_col.add_child(UiStyle.label("No dragons travelling", 13, UiStyle.MUTED))
 
 
 func _dragon_row(dragon: DragonRecord, now: float) -> Control:
@@ -146,12 +160,7 @@ func _dragon_row(dragon: DragonRecord, now: float) -> Control:
 	frame_style.border_color = species.accent
 	frame_style.set_content_margin_all(2)
 	frame.add_theme_stylebox_override("panel", frame_style)
-	var portrait := TextureRect.new()
-	portrait.texture = _assets.get_texture(dragon.art_at(now))
-	portrait.custom_minimum_size = Vector2(64, 52)
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	frame.add_child(portrait)
+	frame.add_child(DragonSheet.portrait(dragon, now, _assets, Vector2(64, 52)))
 	row.add_child(frame)
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", -2)

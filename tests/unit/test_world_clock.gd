@@ -35,3 +35,5 @@ func test_format_duration() -> void:
 	assert_eq(WorldClock.format_duration(45.0), "45m")
 	assert_eq(WorldClock.format_duration(120.0), "2h")
 	assert_eq(WorldClock.format_duration(85.4), "1h 25m")
+	assert_eq(WorldClock.format_duration(4 * 1440.0), "4d")
+	assert_eq(WorldClock.format_duration(2 * 1440.0 + 4 * 60.0 + 20.0), "2d 4h")
